@@ -14,3 +14,7 @@ Allows restore recently closed tabs and windows
 Forked from <a href="https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close_Tabs">Infocatcher Undo_Close_Tabs</a>
 </pre>
 
+<h4><a href="https://github.com/sdavidg/firefoxChromeScripts/blob/main/scripts/dav_Mousewheel_Zoom.uc.js">Mousewheel_Zoom</a></h4>
+<pre>
+Zoom with mousewheel on location bar
+</pre>
