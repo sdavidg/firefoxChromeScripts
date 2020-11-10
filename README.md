@@ -1,7 +1,7 @@
 <h1>firefoxChromeScripts</h1>
 
 <h4><a href="https://github.com/sdavidg/firefoxChromeScripts/blob/main/scripts/dav_LinkifiesLocationBar.uc.js">LinkifiesLocationBar</a></h4>
-<img src="https://github.com/sdavidg/firefoxChromeScripts/blob/main/images/LinkifiesLocationBar.png"/>
+<img src="https://github.com/sdavidg/firefoxChromeScripts/blob/main/images/LinkifiesLocationBar.png" />
 <pre>
 Linkifies URL segments
 Idea based on
