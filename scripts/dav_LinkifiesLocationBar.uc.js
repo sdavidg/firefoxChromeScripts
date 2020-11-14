@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name                 dav_LinkifiesLocationBar.uc
+// @name                 dav_LinkifiesLocationBar
 // @version              1.0
-// @description          dav_LinkifiesLocationBar.uc
-// @shutdown        shutdown();
+// @description          dav_LinkifiesLocationBar
+// @shutdown        dav_LinkifiesLocationBar.globalShutdown();
 // ==/UserScript==
 
 /*
@@ -10,7 +10,20 @@ Idea based on
 https://addons.mozilla.org/en-US/firefox/addon/locationbar%C2%B2/
 https://github.com/simonlindholm/locationbar2
 */
-function activaLocationBar() {
+setTimeout(function() {
+	if (location.href != 'chrome://browser/content/browser.xhtml') return;
+
+	function getWindow(){
+		return window;
+	}
+	function getMostRecentWindow(){
+		var win = Components.classes["@mozilla.org/appshell/window-mediator;1"]
+			.getService(Components.interfaces.nsIWindowMediator)
+			.getMostRecentWindow("navigator:browser");
+		return win;
+	}
+	var localWindow = getWindow();
+	localWindow.dav_LinkifiesLocationBar = {};
 
     var style = `
 		.urlbar-input-box[dav_LinkifiesLocationBar] #urlbar-input:focus ~ .claseLocationBar{
@@ -100,7 +113,7 @@ function activaLocationBar() {
 		  font-family: monospace;
 			line-height: 24px;
 		}
-		.claseLocationBar{ 
+		.claseLocationBar{
 		 line-height: 28px;
 		}
 		.claseLocationBar .pathname:after{
@@ -134,7 +147,7 @@ function activaLocationBar() {
 		},
 		unload: function(cssCode) {
 			var uri = Services.io.newURI("data:text/css;charset=utf-8," + encodeURIComponent(cssCode), null, null);
-			if (this.sss.sheetRegistered(uri,this.sss.A_SHEET))
+			if (this.sss.sheetRegistered(uri,this.sss.USER_SHEET))
 			{
 				this.sss.unregisterSheet(uri,this.sss.USER_SHEET);
 			}
@@ -145,12 +158,6 @@ function activaLocationBar() {
 		left: 0,
 		middle: 1,
 		right: 2
-	}
-	function getDocument(){
-		var win = Components.classes["@mozilla.org/appshell/window-mediator;1"]
-			.getService(Components.interfaces.nsIWindowMediator)
-			.getMostRecentWindow("navigator:browser");
-		return win.document;
 	}
 
 	function extend() {
@@ -180,14 +187,14 @@ function activaLocationBar() {
 			estilos: {}
 		}, elto);
 
-		var node = getDocument().createXULElement(elto.type);
+		var node = getWindow().document.createXULElement(elto.type);
 
 		Object.keys(elto.attrArray).forEach(key => {
 			if(key == "innerHTML"){
 				node.innerHTML = elto.attrArray[key];
 			}
 			else {
-				node.setAttribute(key, elto.attrArray[key]);	
+				node.setAttribute(key, elto.attrArray[key]);
 			}
 		});
 
@@ -263,7 +270,7 @@ function activaLocationBar() {
 	}
 
 	function borraPrevio() {
-		var divPrevio = getDocument().querySelector(".claseLocationBar");
+		var divPrevio = localWindow.document.querySelector(".claseLocationBar");
 		if (divPrevio) {
 			divPrevio.parentNode.removeChild(divPrevio)
 		}
@@ -282,13 +289,8 @@ function activaLocationBar() {
 	function pintaLocation_() {
 		divLocationBar.innerHTML = '';
 
-		var urlBarInput = getDocument().querySelector("#urlbar-input").value;
+		var urlBarInput = getWindow().document.querySelector("#urlbar-input").value;
 		var urlGBrowser = gBrowser.currentURI.displaySpec;
-
-		/*
-		console.log("urlBarInput", urlBarInput);
-		console.log("urlGBrowser", urlGBrowser);
-		*/
 
 		if(urlGBrowser.startsWith("about")){
 			divLocationBar.innerHTML = encodeHTML(urlBarInput);
@@ -356,7 +358,7 @@ function activaLocationBar() {
 	}
 
 	/******************* INIT ***************************/
-	var urlbarInput = getDocument().querySelector("#urlbar-input");
+	var urlbarInput = getWindow().document.querySelector("#urlbar-input");
 
 	var divLocationBar = createElement({
 		type: "div",
@@ -388,6 +390,7 @@ function activaLocationBar() {
 
 	var last_displaySpec = "";
 	var intevalID = setInterval(function(){
+		//console.log("setInterval", intevalID,  localWindow == window, localWindow == getMostRecentWindow());
 		let actual_displaySpec = gBrowser.currentURI.displaySpec;
 		if(last_displaySpec != actual_displaySpec){
 			last_displaySpec = actual_displaySpec;
@@ -396,21 +399,21 @@ function activaLocationBar() {
 	}, 50);
 	CSS_Loader.load(style);
 	/******************* END INIT ***************************/
-
-	miShutDown = function(){
+	dav_LinkifiesLocationBar.shutdown = function(win){
 		borraPrevio();
 		clearTimeout(intevalID);
 		urlbarInput.parentNode.removeAttribute("dav_LinkifiesLocationBar");
 		CSS_Loader.unload(style);
 		urlbarInput.removeEventListener("blur", pintaLocation);
 	}
-}
-var miShutDown;
-function shutdown(){
-	miShutDown();
-}
 
-(function(){
-	if (location.href != 'chrome://browser/content/browser.xhtml') return;
-	setTimeout(activaLocationBar, 1000);
-})();
+	dav_LinkifiesLocationBar.globalShutdown = function(){
+		var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"]
+					.getService(Components.interfaces.nsIWindowMediator);
+		var ws = wm.getEnumerator(null);
+		while(ws.hasMoreElements()) {
+			var w = ws.getNext();
+			w.dav_LinkifiesLocationBar.shutdown(w);
+		}
+	}
+}, 10);
