@@ -13,6 +13,8 @@ https://github.com/simonlindholm/locationbar2
 setTimeout(function() {
 	if (location.href != 'chrome://browser/content/browser.xhtml') return;
 
+	const colorizeExtensionFile = false;
+
 	function getWindow(){
 		return window;
 	}
@@ -191,7 +193,7 @@ setTimeout(function() {
 
 		Object.keys(elto.attrArray).forEach(key => {
 			if(key == "innerHTML"){
-				node.innerHTML = elto.attrArray[key];
+				node.innerHTML = encodeHTML(elto.attrArray[key]);
 			}
 			else {
 				node.setAttribute(key, elto.attrArray[key]);
@@ -211,7 +213,7 @@ setTimeout(function() {
 	}
 
 	function encodeHTML(text) {
-		return text.replace(/&/g, '&amp;')
+		return decodeURI(text).replace(/&/g, '&amp;')
 			.replace(/</g, '&lt;')
 			.replace(/>/g, '&gt;')
 			.replace(/"/g, '&quot;')
@@ -227,7 +229,7 @@ setTimeout(function() {
 				type: "label",
 				attrArray: {
 					class: "label_pathname",
-					innerHTML:encodeHTML("/")
+					innerHTML:"/"
 				}
 			});
 			divLocationBar.appendChild(sp);
@@ -235,14 +237,14 @@ setTimeout(function() {
 		let sp = createElement({
 			type: "span",
 			attrArray: {
-				class: clase
+				class: clase,
+				innerHTML:text
 			},
 			evtListener: [{
 				type: "click",
 				funcion: clickPart
 			}]
 		});
-		sp.innerHTML = encodeHTML(text);
 		divLocationBar.appendChild(sp);
 		sp.setAttribute("href", divLocationBar.textContent);
 		return sp;
@@ -327,7 +329,7 @@ setTimeout(function() {
 		arrayPathname.forEach((elto, index) => {
 			if (elto) {
 				let sp = appendPart(elto, "pathname");
-				/*if(index == arrayPathnameLength-1)
+				if(colorizeExtensionFile && index == arrayPathnameLength-1)
 				{
 					let arrayDot = elto.split(".");
 					if(arrayDot.length > 1)
@@ -350,7 +352,7 @@ setTimeout(function() {
 							}
 						}));
 					}
-				}*/
+				}
 			}
 		});
 		appendPart(search, "search");
