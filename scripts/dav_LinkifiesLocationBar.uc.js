@@ -13,7 +13,8 @@ https://github.com/simonlindholm/locationbar2
 setTimeout(function() {
 	if (location.href != 'chrome://browser/content/browser.xhtml') return;
 
-	const colorizeExtensionFile = false;
+	const colorizeExtensionFile = false,
+		selectUrlbarText = true;
 
 	function getWindow(){
 		return window;
@@ -28,15 +29,7 @@ setTimeout(function() {
 	localWindow.dav_LinkifiesLocationBar = {};
 
     var style = `
-		.urlbar-input-box[dav_LinkifiesLocationBar] #urlbar-input:focus ~ .claseLocationBar{
-		   display: none !important;
-		}
-		.urlbar-input-box[dav_LinkifiesLocationBar]  #urlbar-input:focus{
-		   opacity: 1;
-		}
-		.urlbar-input-box[dav_LinkifiesLocationBar]  #urlbar-input{
-		   opacity: 0;
-		}
+		@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
 
 		.claseLocationBar{
 		   display: block;
@@ -140,18 +133,36 @@ setTimeout(function() {
 		}
     `;
 
+	var stylexul = `
+		.urlbar-input-box[dav_LinkifiesLocationBar] #urlbar-input:focus ~ .claseLocationBar{
+		   display: none !important;
+		}
+		.urlbar-input-box[dav_LinkifiesLocationBar]  #urlbar-input:focus{
+		   opacity: 1;
+		}
+		.urlbar-input-box[dav_LinkifiesLocationBar]  #urlbar-input{
+		   opacity: 0;
+		}
+    `;
+
+
+/*
+AGENT_SHEET: 0
+​USER_SHEET: 1
+AUTHOR_SHEET: 2
+*/
 	var CSS_Loader = {
 		sss: Components.classes["@mozilla.org/content/style-sheet-service;1"].getService(Components.interfaces.nsIStyleSheetService),
 		load: function(cssCode) {
 			this.unload(cssCode);
 			var uri = Services.io.newURI("data:text/css;charset=utf-8," + encodeURIComponent(cssCode), null, null);
-			this.sss.loadAndRegisterSheet(uri, this.sss.USER_SHEET);
+			this.sss.loadAndRegisterSheet(uri, this.sss.AGENT_SHEET);
 		},
 		unload: function(cssCode) {
 			var uri = Services.io.newURI("data:text/css;charset=utf-8," + encodeURIComponent(cssCode), null, null);
-			if (this.sss.sheetRegistered(uri,this.sss.USER_SHEET))
+			if (this.sss.sheetRegistered(uri,this.sss.AGENT_SHEET))
 			{
-				this.sss.unregisterSheet(uri,this.sss.USER_SHEET);
+				this.sss.unregisterSheet(uri,this.sss.AGENT_SHEET);
 			}
 		}
 	}
@@ -371,6 +382,9 @@ setTimeout(function() {
 			type: "click",
 			funcion: function(evt) {
 				urlbarInput.focus();
+				if(selectUrlbarText){
+					urlbarInput.select();
+				}
 			}
 		},{
 			type: "mouseenter",
@@ -400,12 +414,14 @@ setTimeout(function() {
 		}
 	}, 50);
 	CSS_Loader.load(style);
+	CSS_Loader.load(stylexul);
 	/******************* END INIT ***************************/
 	dav_LinkifiesLocationBar.shutdown = function(win){
 		borraPrevio();
 		clearTimeout(intevalID);
 		urlbarInput.parentNode.removeAttribute("dav_LinkifiesLocationBar");
 		CSS_Loader.unload(style);
+		CSS_Loader.unload(stylexul);
 		urlbarInput.removeEventListener("blur", pintaLocation);
 	}
 
