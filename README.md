@@ -27,3 +27,8 @@ Display tab URL in tab tooltip.
 Idea based on
 <a href="https://github.com/LouCypher/tab-tooltip-url">tab-tooltip-url</a>
 </pre>
+<h4><a href="https://github.com/sdavidg/firefoxChromeScripts/blob/main/scripts/dav_DoubleClickOnTab_PinUnpin.uc.js">Pin/Unpin tab with double click</a></h4>
+<pre>
+Pin/Unpin tab with double click
+</pre>
+
