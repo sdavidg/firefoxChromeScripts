@@ -145,7 +145,6 @@ setTimeout(function() {
 		}
     `;
 
-
 /*
 AGENT_SHEET: 0
 ​USER_SHEET: 1
@@ -372,7 +371,10 @@ AUTHOR_SHEET: 2
 
 	/******************* INIT ***************************/
 	var urlbarInput = getWindow().document.querySelector("#urlbar-input");
-
+	var timeMouseMove = -1;
+	function hideDivLocatonBar(){
+		urlbarInput.focus();
+	}
 	var divLocationBar = createElement({
 		type: "div",
 		attrArray: {
@@ -381,7 +383,7 @@ AUTHOR_SHEET: 2
 		evtListener: [{
 			type: "click",
 			funcion: function(evt) {
-				urlbarInput.focus();
+				hideDivLocatonBar()
 				if(selectUrlbarText){
 					urlbarInput.select();
 				}
@@ -392,8 +394,13 @@ AUTHOR_SHEET: 2
 				//esto es el ratón entrando por encima
 				if(evt.screenY == divLocationBar.screenY)
 				{
-					urlbarInput.focus();
+					timeMouseMove = setTimeout(hideDivLocatonBar, 500);
 				}
+			}
+		},{
+			type: "mouseleave",
+			funcion: function(evt) {
+				clearTimeout(timeMouseMove);
 			}
 		}]
 	});
