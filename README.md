@@ -20,7 +20,7 @@ Forked from <a href="https://github.com/Infocatcher/Custom_Buttons/tree/master/U
 Zoom with mousewheel on location bar
 </pre>
 
-<h4><a href="https://github.com/sdavidg/firefoxChromeScripts/blob/main/scripts/dav_tab_title_url.uc">tab_title_url</a></h4>
+<h4><a href="https://github.com/sdavidg/firefoxChromeScripts/blob/main/scripts/dav_tab_title_url.uc.js">tab_title_url</a></h4>
 <img src="https://github.com/sdavidg/firefoxChromeScripts/blob/main/images/tab_title_url.png" />
 <pre>
 Display tab URL in tab tooltip.
