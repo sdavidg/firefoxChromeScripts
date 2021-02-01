@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                 dav_tab_title_url.uc
-// @version              1.0
+// @version              2.0
 // @description          dav_tab_title_url.uc
 // ==/UserScript==
 
@@ -58,14 +58,6 @@ function linkifiesLocationBar(url)
 		return node;
 	}
 
-	function encodeHTML(text) {
-		return decodeURI(text).replace(/&/g, '&amp;')
-			.replace(/</g, '&lt;')
-			.replace(/>/g, '&gt;')
-			.replace(/"/g, '&quot;')
-			.replace(/'/g, '&apos;');
-	}
-
 	function appendPart(text, clase) {
 		if (!text) return;
 
@@ -109,7 +101,7 @@ function linkifiesLocationBar(url)
 			class: "claseLocationBarTooltip"
 		}
 	});
-	
+
 	try {
 		var { protocol, hostname, port, pathname, hash, search } = new URL(url);
 	} catch (e) {
@@ -167,33 +159,38 @@ function linkifiesLocationBar(url)
 	appendPart(search, "search");
 	appendPart(hash, "hash");
 
-	return divLocationBar;	
+	return divLocationBar;
 }
 
 
 var CSS_Loader = {
+	type:{
+		AGENT_SHEET: 0,
+		USER_SHEET: 1,
+		AUTHOR_SHEET: 2
+	},
+	type_default:1,
 	sss: Components.classes["@mozilla.org/content/style-sheet-service;1"].getService(Components.interfaces.nsIStyleSheetService),
 	load: function(cssCode) {
 		this.unload(cssCode);
 		var uri = Services.io.newURI("data:text/css;charset=utf-8," + encodeURIComponent(cssCode), null, null);
-		this.sss.loadAndRegisterSheet(uri, this.sss.AGENT_SHEET);
+		this.sss.loadAndRegisterSheet(uri, this.type_default);
 	},
 	unload: function(cssCode) {
 		var uri = Services.io.newURI("data:text/css;charset=utf-8," + encodeURIComponent(cssCode), null, null);
-		if (this.sss.sheetRegistered(uri,this.sss.AGENT_SHEET))
+		if (this.sss.sheetRegistered(uri,this.type_default))
 		{
-			this.sss.unregisterSheet(uri,this.sss.AGENT_SHEET);
+			this.sss.unregisterSheet(uri,this.type_default);
 		}
 	}
 }
 function asignaEstilos(){
 	var style = `
-	
 	/*************************************
 	*************** COLORS ***************
 	*************************************/
 	.claseLocationBarTooltip{
-	  font-family:courier ;
+	  font-family:monospace;
 	  margin:5px;
 	}
 	.claseLocationBarTooltip .label_pathname{
@@ -241,7 +238,7 @@ function asignaEstilos(){
 		border-width: 4px 4px 4px 7px;
 		border-color: transparent transparent transparent #6fa880;
 		top: 3px;
-		left: 0px;	
+		left: 0px;
 		width: 0px;
 		height: 0px;
 	}
@@ -261,15 +258,69 @@ function asignaEstilos(){
     `;
 	CSS_Loader.load(style);
 }
-	
-	
+
+	var style = `
+		#dav_tab_title_url {
+			font-family: monospace;
+		}
+		.divTitle{
+			display: block;
+		}
+		#dav_tab_title_url .title,
+		#dav_tab_title_url .url,
+		#dav_tab_title_url .reloadDiv {
+			margin:5px;
+		}
+		#dav_tab_title_url .title,
+		#dav_tab_title_url .url{
+			display:inline-block;
+		}
+		#dav_tab_title_url .title{
+			color:black;
+			font-weight: bold;
+		}
+		#dav_tab_title_url .url{
+			color:blue;
+		}
+		#dav_tab_title_url .reloadText{
+			color: teal;
+		}
+		#dav_tab_title_url .reloadValue{
+			color: red;
+			font-weight: bold;
+			margin:0 3px;
+		}
+	`;
+	CSS_Loader.load(style);
+
+	function paddy(n, p, c) {
+		var pad_char = typeof c !== 'undefined' ? c : '0';
+		var pad = new Array(1 + p).join(pad_char);
+		return (pad + n).slice(-pad.length);
+	}
+	function paddy2(n) {
+		return paddy(n, 2, 0);
+	}
+	function fechaACadena(fecha){
+		var dia = paddy2(fecha.getDate());
+		var mes = paddy2(fecha.getMonth()+1);
+		var anno = fecha.getFullYear();
+
+		var hora = paddy2(fecha.getHours());
+		var minutos = paddy2(fecha.getMinutes());
+		var segundos = paddy2(fecha.getSeconds());
+
+		return dia+"/"+mes+"/"+anno+" "+hora+":"+minutos+":"+segundos;
+	}
+
 	var styleString = (style) => {
 		return Object.keys(style).reduce((prev, curr) => {
 			return `${prev += curr.split(/(?=[A-Z])/).join('-').toLowerCase()}:${style[curr]};`
 		}, '');
 	};
 	function encodeHTML(text) {
-		return decodeURI(text).replace(/&/g, '&amp;')
+		return decodeURI(text)
+			.replace(/&/g, '&amp;')
 			.replace(/</g, '&lt;')
 			.replace(/>/g, '&gt;')
 			.replace(/"/g, '&quot;')
@@ -290,7 +341,7 @@ function asignaEstilos(){
 			}
 			if(key == "textContent"){
 				node.textContent = elto.attr[key];
-			}			
+			}
 			else {
 				node.setAttribute(key, elto.attr[key]);
 			}
@@ -314,57 +365,101 @@ function asignaEstilos(){
 			return getTabElto(target.parentNode);
 		}
 	}
-	function showing(tip, target){
-		var tab = getTabElto(target);
-		if(!tab) return false;
-		tip.textContent = "";
-		tip.appendChild(getTooltipData(tab));
-	}
-	function getTooltipData(tab){
-		var titulo = createElement({
+	function createLabel(text,clase){
+		return createElement({
 			type:"label",
 			attr:{
-				innerHTML: tab.getAttribute("label"),
-			},
-			estilos:{
-				color:"black",
-				display:"block",
-				fontWeight: "bold",
-				fontFamily: "monospace",
-				margin:"5px"
+				innerHTML: text,
+				class: clase
 			}
-		});
+		})
+	}
+	function createSpan(text,clase){
+		return createElement({
+			type:"span",
+			attr:{
+				innerHTML: text,
+				class: clase
+			}
+		})
+	}
+	function getTooltipData(tab){
+		let title = unescape(tab.getAttribute("label")).replace(/%/g, '%25');
+		var titulo = createSpan(title,"title");
 		var url;
-		
 		if(linkifiesUrl)
 		{
 			url = linkifiesLocationBar(tab.linkedBrowser.currentURI.spec);
 		}
 		else
 		{
-			 url = createElement({
-				type:"label",
+			url = createSpan(tab.linkedBrowser.currentURI.spec,"url");
+		}
+
+		let divTitle = createElement({type:"div", attr:{class:"divTitle"}})
+		divTitle.appendChild(titulo);
+		divTitle.appendChild(url);
+
+		var df = document.createDocumentFragment();
+		df.appendChild(divTitle);
+
+		if(tab.classList.contains("reloadTab"))
+		{
+			let timeSeg = tab.getAttribute("reloadTab_timeSeg")-0;
+			let lastReload = tab.getAttribute("reloadTab_lastReload")-0;
+			let times = tab.getAttribute("reloadTab_timesReload")-0;
+
+			let nextTime = new Date(lastReload+timeSeg*1000);
+			let nextReload = fechaACadena(nextTime).split(" ")[1]
+			let quedan = Math.round((nextTime.getTime()-new Date().getTime())/1000);
+
+			let div = createElement({type:"div", attr:{class:"reloadDiv"}})
+
+			div.append(
+				createSpan("Reload:","reloadText"),
+				createSpan(timeSeg,"reloadValue"),
+				createSpan("seg","reloadText"),
+
+				createSpan(" - Next:","reloadText"),
+				createSpan(nextReload,"reloadValue"),
+
+				createSpan(" - Rest:","reloadText"),
+				createSpan(quedan,"reloadValue"),
+				createSpan("seg","reloadText"),
+
+				createSpan(" - Times:","reloadText"),
+				createSpan(times, "reloadValue"),
+			);
+
+			df.appendChild(div);
+
+			/*
+			let reload = "Reload:"+timeSeg+"seg - Next:"+nextReload+" - Rest:"+quedan+"seg";
+			df.appendChild(createElement({
+				type:"span",
 				attr:{
-					innerHTML: tab.linkedBrowser.currentURI.spec,
-					class:"xyz"
+					innerHTML: reload,
 				},
 				estilos:{
-					color:"blue",
-					fontFamily: "monospace",
+					color:"teal",
 					margin:"5px"
 				}
-			});
+			}));*/
 		}
-		
-		var df = document.createDocumentFragment();
-		df.appendChild(titulo);
-		df.appendChild(url);
+
 		return df;
 	}
-
-	function hidding(){
+	function showing(tip, target){
+		var tab = getTabElto(target);
+		if(!tab) return false;
+		tip.textContent = "";
+		tip.appendChild(getTooltipData(tab));
+		return true;
+	}
+	function hidding(tip, target){
 
 	}
+
 	var tipId = "dav_tab_title_url"
 	var tip = createElement({
 		type:"tooltip",
@@ -372,7 +467,7 @@ function asignaEstilos(){
 			id: tipId,
 			orient: "vertical",
 			onpopupshowing: "return this.showing(this, document.tooltipNode);",
-			onpopuphiding: "this.hidding();"
+			onpopuphiding: "this.hidding(this, document.tooltipNode);"
 		}
 	});
 	tip.showing = showing;
@@ -384,6 +479,6 @@ function asignaEstilos(){
 	document.getElementById("mainPopupSet").appendChild(tip);
 	tip.textContent = "";
 	if(linkifiesUrl){
-		asignaEstilos();	
-	}	
+		asignaEstilos();
+	}
 })();
