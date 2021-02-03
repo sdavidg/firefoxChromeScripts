@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                 dav_LinkifiesLocationBar
-// @version              1.0
+// @version              1.1
 // @description          dav_LinkifiesLocationBar
 // @shutdown        dav_LinkifiesLocationBar.globalShutdown();
 // ==/UserScript==
@@ -14,7 +14,9 @@ setTimeout(function() {
 	if (location.href != 'chrome://browser/content/browser.xhtml') return;
 
 	const colorizeExtensionFile = false,
-		selectUrlbarText = true;
+		selectUrlbarText = true,
+		pathnameArrow = true,
+		fontMonospace = true;
 
 	function getWindow(){
 		return window;
@@ -28,7 +30,7 @@ setTimeout(function() {
 	var localWindow = getWindow();
 	localWindow.dav_LinkifiesLocationBar = {};
 
-    var style = `
+    var styleBase = `
 		@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
 
 		.claseLocationBar{
@@ -49,23 +51,12 @@ setTimeout(function() {
 			text-decoration: underline;
 		    cursor: pointer;
 		}
-		.claseLocationBar span.pathname{
-		   padding-left:9px;
-		   margin: 0 2px;
+		.claseLocationBar .label_pathname {
+			margin-inline: unset !important;
 		}
-		.claseLocationBar .pathname:after{
-		  content:' ';
-		  display: block;
-		  position: absolute;
-		  border-style: solid;
-		  border-width: 4px 4px 4px 7px;
-		  border-color: transparent transparent transparent #6fa880;
-		  top: 10px;
-		  left: 0px;
-		}
-		.claseLocationBar .label_pathname{
-		   display: none;
-		}
+		locationBarTag{
+		  display: inline;
+		}		
 		/*************************************
 		*************** COLORS ***************
 		*************************************/
@@ -99,16 +90,16 @@ setTimeout(function() {
 		.claseLocationBar .extension{
 		    color: rgb(96,86,143);
 		}
+    `;
 
-		/*************************************
-		***************  font-family: monospace; ***************
-		*************************************/
-		/*
+	var style_fontMonospace = !fontMonospace?"":`
+		@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
 		.urlbar-input-box[dav_LinkifiesLocationBar]{
-		  font-family: monospace;
-			line-height: 24px;
+		  font-family: monospace ;
+		  margin-top: 4px;  
 		}
-		.claseLocationBar{
+		.claseLocationBar{ 
+		 margin-top: -4px;
 		 line-height: 28px;
 		}
 		.claseLocationBar .pathname:after{
@@ -122,16 +113,30 @@ setTimeout(function() {
 		}
 		.claseLocationBar span.hostname{
 		  margin-right: 1px;
+		}		
+	`;
+
+	var style_pathnameArrow = !pathnameArrow?"":`
+		@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
+		.claseLocationBar span.pathname{
+			padding-left:9px;
+			margin: 0 2px;
 		}
-		*/
-		/*.claseLocationBar label {
-			margin-block: unset !important;
-			margin-inline: unset !important;
-		}*/
-		locationBarTag{
-		  display: inline;
+		.claseLocationBar .pathname:before{
+			content:' ';
+			display: block;
+			position: absolute;
+			border-style: solid;
+			border-width: 4px 4px 4px 7px;
+			border-color: transparent transparent transparent #6fa880;
+			border-color: transparent transparent transparent #5ba8bf;
+			top: 10px;
+			left: 0px;
 		}
-    `;
+		.claseLocationBar .label_pathname{
+			display: none;
+		}		
+	`;	
 
 	var stylexul = `
 		.urlbar-input-box[dav_LinkifiesLocationBar] #urlbar-input:focus ~ .claseLocationBar{
@@ -223,7 +228,8 @@ AUTHOR_SHEET: 2
 	}
 
 	function encodeHTML(text) {
-		return decodeURI(text).replace(/&/g, '&amp;')
+		return decodeURI(text)
+			.replace(/&/g, '&amp;')			
 			.replace(/</g, '&lt;')
 			.replace(/>/g, '&gt;')
 			.replace(/"/g, '&quot;')
@@ -420,14 +426,18 @@ AUTHOR_SHEET: 2
 			pintaLocation();
 		}
 	}, 50);
-	CSS_Loader.load(style);
+	CSS_Loader.load(styleBase);
+	CSS_Loader.load(style_pathnameArrow);
+	CSS_Loader.load(style_fontMonospace);
 	CSS_Loader.load(stylexul);
 	/******************* END INIT ***************************/
 	dav_LinkifiesLocationBar.shutdown = function(win){
 		borraPrevio();
 		clearTimeout(intevalID);
 		urlbarInput.parentNode.removeAttribute("dav_LinkifiesLocationBar");
-		CSS_Loader.unload(style);
+		CSS_Loader.unload(styleBase);
+		CSS_Loader.unload(style_pathnameArrow);
+		CSS_Loader.unload(style_fontMonospace);
 		CSS_Loader.unload(stylexul);
 		urlbarInput.removeEventListener("blur", pintaLocation);
 	}
