@@ -16,7 +16,11 @@ setTimeout(function() {
 	const colorizeExtensionFile = false,
 		selectUrlbarText = true,
 		pathnameArrow = true,
-		fontMonospace = true;
+		fontMonospace = true,
+		usePunycode = true;
+
+	//https://stackoverflow.com/questions/183485/converting-punycode-with-dash-character-to-unicode/301287#301287
+	var punycode=new function(){this.utf16={decode:function(r){for(var o,e,t=[],n=0,f=r.length;n<f;){if(55296==(63488&(o=r.charCodeAt(n++)))){if(e=r.charCodeAt(n++),55296!=(64512&o)||56320!=(64512&e))throw new RangeError("UTF-16(decode): Illegal UTF-16 sequence");o=((1023&o)<<10)+(1023&e)+65536}t.push(o)}return t},encode:function(r){for(var o,e=[],t=0,n=r.length;t<n;){if(55296==(63488&(o=r[t++])))throw new RangeError("UTF-16(encode): Illegal UTF-16 value");o>65535&&(o-=65536,e.push(String.fromCharCode(o>>>10&1023|55296)),o=56320|1023&o),e.push(String.fromCharCode(o))}return e.join("")}};var r=36,o=700,e=1,t=26,n=38,f=2147483647;function h(r,o){return r+22+75*(r<26)-((0!=o)<<5)}function a(f,h,a){var i;for(f=a?Math.floor(f/o):f>>1,f+=Math.floor(f/h),i=0;f>(r-e)*t>>1;i+=r)f=Math.floor(f/(r-e));return Math.floor(i+(r-e+1)*f/(f+n))}this.decode=function(o,n){var h,i,u,c,d,l,p,g,s,C,v,w,y,A,E=[],M=[],R=o.length;for(h=128,u=0,c=72,(d=o.lastIndexOf("-"))<0&&(d=0),l=0;l<d;++l){if(n&&(M[E.length]=o.charCodeAt(l)-65<26),o.charCodeAt(l)>=128)throw new RangeError("Illegal input >= 0x80");E.push(o.charCodeAt(l))}for(p=d>0?d+1:0;p<R;){for(g=u,s=1,C=r;;C+=r){if(p>=R)throw RangeError("punycode_bad_input(1)");if((v=(A=o.charCodeAt(p++))-48<10?A-22:A-65<26?A-65:A-97<26?A-97:r)>=r)throw RangeError("punycode_bad_input(2)");if(v>Math.floor((f-u)/s))throw RangeError("punycode_overflow(1)");if(u+=v*s,v<(w=C<=c?e:C>=c+t?t:C-c))break;if(s>Math.floor(f/(r-w)))throw RangeError("punycode_overflow(2)");s*=r-w}if(c=a(u-g,i=E.length+1,0===g),Math.floor(u/i)>f-h)throw RangeError("punycode_overflow(3)");h+=Math.floor(u/i),u%=i,n&&M.splice(u,0,o.charCodeAt(p-1)-65<26),E.splice(u,0,h),u++}if(n)for(u=0,y=E.length;u<y;u++)M[u]&&(E[u]=String.fromCharCode(E[u]).toUpperCase().charCodeAt(0));return this.utf16.encode(E)},this.encode=function(o,n){var i,u,c,d,l,p,g,s,C,v,w,y;n&&(y=this.utf16.decode(o));var A=(o=this.utf16.decode(o.toLowerCase())).length;if(n)for(p=0;p<A;p++)y[p]=o[p]!=y[p];var E,M,R=[];for(i=128,u=0,l=72,p=0;p<A;++p)o[p]<128&&R.push(String.fromCharCode(y?(E=o[p],M=y[p],(E-=(E-97<26)<<5)+((!M&&E-65<26)<<5)):o[p]));for(c=d=R.length,d>0&&R.push("-");c<A;){for(g=f,p=0;p<A;++p)(w=o[p])>=i&&w<g&&(g=w);if(g-i>Math.floor((f-u)/(c+1)))throw RangeError("punycode_overflow (1)");for(u+=(g-i)*(c+1),i=g,p=0;p<A;++p){if((w=o[p])<i&&++u>f)return Error("punycode_overflow(2)");if(w==i){for(s=u,C=r;!(s<(v=C<=l?e:C>=l+t?t:C-l));C+=r)R.push(String.fromCharCode(h(v+(s-v)%(r-v),0))),s=Math.floor((s-v)/(r-v));R.push(String.fromCharCode(h(s,n&&y[p]?1:0))),l=a(u,c+1,c==d),u=0,++c}}++u,++i}return R.join("")},this.ToASCII=function(r){for(var o=r.split("."),e=[],t=0;t<o.length;++t){var n=o[t];e.push(n.match(/[^A-Za-z0-9-]/)?"xn--"+punycode.encode(n):n)}return e.join(".")},this.toUnicode=function(r){for(var o=r.split("."),e=[],t=0;t<o.length;++t){var n=o[t];e.push(n.match(/^xn--/)?punycode.decode(n.slice(4)):n)}return e.join(".")}};
 
 	function getWindow(){
 		return window;
@@ -56,7 +60,7 @@ setTimeout(function() {
 		}
 		locationBarTag{
 		  display: inline;
-		}		
+		}
 		/*************************************
 		*************** COLORS ***************
 		*************************************/
@@ -96,9 +100,9 @@ setTimeout(function() {
 		@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
 		.urlbar-input-box[dav_LinkifiesLocationBar]{
 		  font-family: monospace ;
-		  margin-top: 4px;  
+		  margin-top: 4px;
 		}
-		.claseLocationBar{ 
+		.claseLocationBar{
 		 margin-top: -4px;
 		 line-height: 28px;
 		}
@@ -113,7 +117,7 @@ setTimeout(function() {
 		}
 		.claseLocationBar span.hostname{
 		  margin-right: 1px;
-		}		
+		}
 	`;
 
 	var style_pathnameArrow = !pathnameArrow?"":`
@@ -135,8 +139,8 @@ setTimeout(function() {
 		}
 		.claseLocationBar .label_pathname{
 			display: none;
-		}		
-	`;	
+		}
+	`;
 
 	var stylexul = `
 		.urlbar-input-box[dav_LinkifiesLocationBar] #urlbar-input:focus ~ .claseLocationBar{
@@ -229,7 +233,7 @@ AUTHOR_SHEET: 2
 
 	function encodeHTML(text) {
 		return decodeURI(text)
-			.replace(/&/g, '&amp;')			
+			.replace(/&/g, '&amp;')
 			.replace(/</g, '&lt;')
 			.replace(/>/g, '&gt;')
 			.replace(/"/g, '&quot;')
@@ -323,6 +327,10 @@ AUTHOR_SHEET: 2
 			divLocationBar.innerHTML = encodeHTML(urlBarInput);
 			return;
 		}
+		if(usePunycode){
+			hostname = punycode.toUnicode(hostname);
+		}
+
 
 		var partido = hostname.split(".");
 		var subdomain;
