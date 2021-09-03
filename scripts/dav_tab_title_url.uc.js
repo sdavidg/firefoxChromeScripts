@@ -361,8 +361,6 @@ function asignaEstilos(){
 	function getTabElto(target){
 		if(!target || target.nodeName == "tab"){
 			return target;
-		}else if(target.nodeName == "arrowscrollbox"){
-			return null;
 		}else{
 			return getTabElto(target.parentNode);
 		}
@@ -451,27 +449,14 @@ function asignaEstilos(){
 
 		return df;
 	}
-
-	var debounce = (fn, ms = 0) => {
-		let timeoutId;
-		return function(...args) {
-			clearTimeout(timeoutId);
-			timeoutId = setTimeout(() => fn.apply(this, args), ms);
-		};
-	};
-
-	var hoverTab;
-	gBrowser.tabContainer.addEventListener('mousemove', debounce(function(evt){
-		hoverTab = getTabElto(evt.target);
-	}, 500), false);
-
-	function showing(tip){
-		if(!hoverTab) return false;
+	function showing(tip, target){
+		var tab = getTabElto(target);
+		if(!tab) return false;
 		tip.textContent = "";
-		tip.appendChild(getTooltipData(hoverTab));
+		tip.appendChild(getTooltipData(tab));
 		return true;
 	}
-	function hidding(tip){
+	function hidding(tip, target){
 
 	}
 
@@ -481,8 +466,8 @@ function asignaEstilos(){
 		attr:{
 			id: tipId,
 			orient: "vertical",
-			onpopupshowing: "return this.showing(this);",
-			onpopuphiding: "this.hidding(this);"
+			onpopupshowing: "return this.showing(this, this.triggerNode || document.tooltipNode);",
+			onpopuphiding: "this.hidding(this, this.triggerNode || document.tooltipNode);"
 		}
 	});
 	tip.showing = showing;
