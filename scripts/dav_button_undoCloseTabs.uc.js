@@ -138,6 +138,27 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
 	  CSS_Loader.load(style);
 	}
 
+	function paddy(n, p, c) {
+		var pad_char = typeof c !== 'undefined' ? c : '0';
+		var pad = new Array(1 + p).join(pad_char);
+		return (pad + n).slice(-pad.length);
+	}
+	function paddy2(n) {
+		return paddy(n, 2, 0);
+	}
+	function fechaACadena(fecha){
+		var dia = paddy2(fecha.getDate());
+		var mes = paddy2(fecha.getMonth()+1);
+		var anno = fecha.getFullYear();
+
+		var hora = paddy2(fecha.getHours());
+		var minutos = paddy2(fecha.getMinutes());
+		var segundos = paddy2(fecha.getSeconds());
+
+		return dia+"/"+mes+"/"+anno+" "+hora+":"+minutos+":"+segundos;
+		//return anno+"/"+mes+"/"+dia+" "+hora+":"+minutos+":"+segundos;
+	}
+
 	function startUndoClose(event)
 	{
 		/*console.log(gBrowser.selectedBrowser.messageManager);
@@ -157,6 +178,10 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
 
 			console.log("_undoWindowItems", _undoWindowItems);
 			console.log("_undoTabItems", _undoTabItems);
+		}
+		else if (event.button === CLIKS.right)
+		{
+			functions.undoCloseTab(0, event)
 		}
 	}
 
@@ -204,6 +229,17 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
 		return _localize.apply(this, arguments);
 	}
 
+	function decodeURISecure(url){
+		try{
+			url = decodeURI(url);
+		}
+		catch(e){
+			url = url.replaceAll("%", encodeURI("%"));
+			url = decodeURI(url);
+		}			
+		return url;
+	}
+		
 	var functions = {
 		initTooltip: function() {
 			var tip = document.getElementById(options.tipId);
@@ -211,7 +247,7 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
 			tip = this.createElement("tooltip", {
 				id: options.tipId,
 				orient: "vertical",
-				onpopupshowing: "return this.functions.updTooltip(this, document.tooltipNode);",
+				onpopupshowing: "return this.functions.updTooltip(this, this.triggerNode || document.tooltipNode);",
 				onpopuphiding: "this.cancelUpdateTimer();"
 			});
 			tip.functions = this;
@@ -327,33 +363,33 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
 						let days = Math.floor(dt/24/3600);
 						dt -= days*24*3600;
 						let d = new Date((dt + new Date(dt).getTimezoneOffset()*60)*1000);
-						let m = d.getMinutes();
-						let ts = d.getHours() + ":" + (m > 9 ? m : "0" + m);
+						let ts = paddy2(d.getHours()) + ":" + paddy2(d.getMinutes());
 						if(days)
 							ts = days + _localize("day") + " " + ts;
 						let tsTip = _localize("itemTip")
 							.replace("%ago", ts)
-							.replace("%date", new Date(closedAt).toLocaleString());
+							.replace("%date", fechaACadena(new Date(closedAt)));
 						item(key, tsTip);
 				}
 			}, this);
 			return df;
 		},
-		closedAt: function (closedAt){
+		/*closedAt: function (closedAt){
 			if(!closedAt) return "";
 			let dt = Math.round(Math.max(0, Date.now() - closedAt) / 1000);
 			let days = Math.floor(dt / 24 / 3600);
 			dt -= days * 24 * 3600;
 			let d = new Date((dt + new Date(dt).getTimezoneOffset() * 60) * 1000);
-			let m = d.getMinutes();
-			let ts = d.getHours() + ":" + (m > 9 ? m : "0" + m);
+			let ts = paddy2(d.getHours()) + ":" + paddy2(d.getMinutes());
 			if (days)
 				ts = days + " días " + " " + ts;
 			let tsTip = _localize("itemTip")
 				.replace("%ago", ts)
-				.replace("%date", new Date(closedAt).toLocaleString());
+				//.replace("%date", new Date(closedAt).toLocaleString())
+				.replace("%date", fechaACadena(new Date(closedAt)));
+				;
 			return tsTip;
-		},
+		},*/
 		crop: function(s, crop = 500) {
 			if (s.length <= crop)
 				return s;
@@ -394,7 +430,7 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
 						.replace("%count", tabs.length),
 					"class": "menuitem-iconic bookmark-item menuitem-with-favicon",
 					oncommand: "undoCloseWindow(" + i + ");",
-					cb_url: decodeURI(url),
+					cb_url: decodeURISecure(url),
 					cb_urlDecoded: this.crop(url),
 					cb_closedAt: undoItem.closedAt || 0,
 					cb_index: i,
@@ -412,13 +448,14 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
 				var numberEntries = state.entries.length-1;
 				//title += " ("+numberEntries+")";
 				var url = state && state.entries && state.entries[state.index - 1].url || "";
-				var closedAt = this.closedAt(undoItem.closedAt);
+				//var closedAt = this.closedAt(undoItem.closedAt);
 				var mi = this.createElement("menuitem", {
 					label: title,
 					//tooltiptext: "url: "+url+"    \n"+closedAt,
 					class: "menuitem-iconic bookmark-item menuitem-with-favicon",
 					oncommand: "this.parentNode.parentNode.functions.undoCloseTab(" + i + ", event);",
-					cb_url: decodeURI(url),
+					onmouseup: 'this.parentNode.parentNode.functions.shouldPreventHide(event)',
+					cb_url: decodeURISecure(url),
 					cb_urlDecoded: this.crop(url),
 					cb_closedAt: undoItem.closedAt || 0,
 					cb_index: i,
@@ -511,6 +548,20 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
 			}
 			else {
 				this.ss.forgetClosedTab(window, i);
+			}
+		},
+		shouldPreventHide: function (event) {
+			const menuitem = event.target;
+			if (event.button == 1 && !event.ctrlKey) 
+			{
+				menuitem.setAttribute('closemenu', 'none');
+				menuitem.parentNode.addEventListener('popuphidden', () => {
+					menuitem.removeAttribute('closemenu');
+				}, { once: true });
+			} 
+			else 
+			{
+				menuitem.removeAttribute('closemenu');
 			}
 		},
 		populateMenu: function (event, button)
@@ -614,7 +665,6 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
 				let mi = this.createElement("menuitem", {
 					label: _localize("whitoutData")
 				});
-				//mi.setAttribute("style","color:#89042f;font-weight: bold;box-shadow: 0 0 5px 0px red inset, 0 0 10px 0px blue inset, 0 0 12px 2px #ec84ec inset;");
 				mi.setAttribute("class","empty_data");
 				df.appendChild(mi);
 			}
