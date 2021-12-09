@@ -173,8 +173,8 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
 			var wc = SessionStore.getClosedWindowCount();
 			var tc = SessionStore.getClosedTabCount(window);
 
-			var _undoWindowItems = wc && JSON.parse(SessionStore.getClosedWindowData());
-			var _undoTabItems = tc && JSON.parse(SessionStore.getClosedTabData(window));
+			var _undoWindowItems = wc && SessionStore.getClosedWindowData();
+			var _undoTabItems = tc && SessionStore.getClosedTabData(window);
 
 			console.log("_undoWindowItems", _undoWindowItems);
 			console.log("_undoTabItems", _undoTabItems);
@@ -471,6 +471,7 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
 					mi.setAttribute("privateTab-isPrivate", "true");
 					mi.setAttribute("style","color:purple");
 				}
+				console.log("state.userContextId", state.userContextId);
 
 				mi.setAttribute("image", this.cachedIcon(undoItem.image || noImage));
 				undoPopup.appendChild(mi);
@@ -574,9 +575,11 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
 			var tc = SessionStore.getClosedTabCount(window);
 
 			var canRestoreLastSession = "restoreLastSession" in SessionStore && SessionStore.canRestoreLastSession;
-
-			var _undoWindowItems = wc && JSON.parse(SessionStore.getClosedWindowData());
-			var _undoTabItems = tc && JSON.parse(SessionStore.getClosedTabData(window));
+			
+			//var _undoWindowItems = wc && JSON.parse(SessionStore.getClosedWindowData());
+			//var _undoTabItems = tc && JSON.parse(SessionStore.getClosedTabData(window));
+			var _undoWindowItems = wc && SessionStore.getClosedWindowData();
+			var _undoTabItems = tc && SessionStore.getClosedTabData(window);
 
 			options.menuTemplate.forEach(function(sid, indx, arr) {
 				switch (sid) {
@@ -646,10 +649,6 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
 
 			while (df.hasChildNodes() && df.lastChild.localName == "menuseparator")
 				df.removeChild(df.lastChild);
-
-
-			var _undoWindowItems = wc && JSON.parse(SessionStore.getClosedWindowData());
-			var _undoTabItems = tc && JSON.parse(SessionStore.getClosedTabData(window));
 
 			while (popup.hasChildNodes())
 				popup.removeChild(popup.firstChild);
