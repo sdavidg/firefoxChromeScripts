@@ -12,9 +12,11 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
     if (location != 'chrome://browser/content/browser.xhtml') return;
 
 	function getRandomArbitrary(min, max) {
-		var rdn = Math.floor(Math.random() * (max - min + 1) + min);
-		var date = new Date().getTime();
-		return rdn+"_"+date;
+		if(!_uc.dav_button_undoCloseTabs){
+			_uc.dav_button_undoCloseTabs = 0;
+		}
+		_uc.dav_button_undoCloseTabs++;
+		return _uc.dav_button_undoCloseTabs;
 	}
     const
 		btnId = "undoclose_tab"+"_"+getRandomArbitrary(0, 1000),
@@ -171,10 +173,10 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
 		if (event.button === CLIKS.middle)
 		{
 			var wc = SessionStore.getClosedWindowCount();
-			var tc = SessionStore.getClosedTabCount(window);
+			var tc = SessionStore.getClosedTabCountForWindow(window);
 
 			var _undoWindowItems = wc && SessionStore.getClosedWindowData();
-			var _undoTabItems = tc && SessionStore.getClosedTabData(window);
+			var _undoTabItems = tc && SessionStore.getClosedTabDataForWindow(window);
 
 			console.log("_undoWindowItems", _undoWindowItems);
 			console.log("_undoTabItems", _undoTabItems);
@@ -236,10 +238,10 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
 		catch(e){
 			url = url.replaceAll("%", encodeURI("%"));
 			url = decodeURI(url);
-		}			
+		}
 		return url;
 	}
-		
+
 	var functions = {
 		initTooltip: function() {
 			var tip = document.getElementById(options.tipId);
@@ -279,7 +281,7 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
 			{
 				template = options.buttonTipTemplate;
 				header = _localize("restoreTab");
-				/*let undoTabItems = JSON.parse(this.ss.getClosedTabData(window));
+				/*let undoTabItems = JSON.parse(this.ss.getClosedTabDataForWindow(window));
 				if(undoTabItems.length)
 				{
 					let lastItem = undoTabItems[0];
@@ -471,7 +473,6 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
 					mi.setAttribute("privateTab-isPrivate", "true");
 					mi.setAttribute("style","color:purple");
 				}
-				console.log("state.userContextId", state.userContextId);
 
 				mi.setAttribute("image", this.cachedIcon(undoItem.image || noImage));
 				undoPopup.appendChild(mi);
@@ -524,7 +525,7 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
 				SessionStore.setWindowState(window, '{"windows":[{}],"_closedWindows":[]}', false);
 		},
 		clearUndoTabsList: function(e) {
-			var closedTabCount = SessionStore.getClosedTabCount(window);
+			var closedTabCount = SessionStore.getClosedTabCountForWindow(window);
 			if (!closedTabCount)
 				return;
 			if ("forgetClosedTab" in SessionStore) // Gecko 1.9.2+
@@ -553,14 +554,14 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
 		},
 		shouldPreventHide: function (event) {
 			const menuitem = event.target;
-			if (event.button == 1 && !event.ctrlKey) 
+			if (event.button == 1 && !event.ctrlKey)
 			{
 				menuitem.setAttribute('closemenu', 'none');
 				menuitem.parentNode.addEventListener('popuphidden', () => {
 					menuitem.removeAttribute('closemenu');
 				}, { once: true });
-			} 
-			else 
+			}
+			else
 			{
 				menuitem.removeAttribute('closemenu');
 			}
@@ -572,14 +573,14 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
 			var df = document.createDocumentFragment();
 
 			var wc = SessionStore.getClosedWindowCount();
-			var tc = SessionStore.getClosedTabCount(window);
+			var tc = SessionStore.getClosedTabCountForWindow(window);
 
 			var canRestoreLastSession = "restoreLastSession" in SessionStore && SessionStore.canRestoreLastSession;
-			
+
 			//var _undoWindowItems = wc && JSON.parse(SessionStore.getClosedWindowData());
-			//var _undoTabItems = tc && JSON.parse(SessionStore.getClosedTabData(window));
+			//var _undoTabItems = tc && JSON.parse(SessionStore.getClosedTabDataForWindow(window));
 			var _undoWindowItems = wc && SessionStore.getClosedWindowData();
-			var _undoTabItems = tc && SessionStore.getClosedTabData(window);
+			var _undoTabItems = tc && SessionStore.getClosedTabDataForWindow(window);
 
 			options.menuTemplate.forEach(function(sid, indx, arr) {
 				switch (sid) {
