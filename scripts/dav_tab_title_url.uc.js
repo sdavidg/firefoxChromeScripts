@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name				 dav_tab_title_url.uc
-// @version				 3.0
+// @version				 4.0
 // @description			 dav_tab_title_url.uc
 // ==/UserScript==
 
@@ -13,9 +13,10 @@ https://github.com/LouCypher/tab-tooltip-url
 	if(location.href != 'chrome://browser/content/browser.xhtml') return;
 
 	var linkifiesUrl = true,
-		showPreview = true,
+		showPreview = false,
 		timeUpdatePreview = 1000, //miliseconds
-		idTimeoutUpdatePreview
+		idTimeoutUpdatePreview,
+		numberClampsLines = 0 // 0 => no clamps
 	;
 	var widthCanvasIMG = 400;
 	var heightCanvasIMG = widthCanvasIMG*9/16;
@@ -182,6 +183,12 @@ https://github.com/LouCypher/tab-tooltip-url
 		/*************************************
 		*************** COLORS ***************
 		*************************************/
+		#dav_tab_title_url .title_clamp{
+			overflow: hidden;
+			display: -webkit-box;
+			-webkit-line-clamp: `+numberClampsLines+`;
+			-webkit-box-orient: vertical;
+		}
 		.claseLocationBarTooltip{
 			font-family:monospace;
 			margin:5px;
@@ -400,6 +407,9 @@ https://github.com/LouCypher/tab-tooltip-url
 	function getTooltipData(tab){
 		let title = unescape(tab.getAttribute("label")).replace(/%/g, '%25');
 		var titulo = createSpan(title,"title");
+		if(numberClampsLines > 0){
+			titulo.classList.add("title_clamp");
+		}
 		var url;
 		if(linkifiesUrl)
 		{
@@ -471,7 +481,6 @@ https://github.com/LouCypher/tab-tooltip-url
 		tip.appendChild(getTooltipData(tab));
 		if(showPreview){
 			let img = createIMG();
-
 			let divImg = createElement({type:"div", attr:{class:"divImg"}})
 			divImg.appendChild(img);
 			tip.appendChild(divImg);
