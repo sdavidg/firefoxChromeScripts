@@ -13,6 +13,7 @@ https://github.com/simonlindholm/locationbar2
 setTimeout(function() {
 	if (location.href != 'chrome://browser/content/browser.xhtml') return;
 
+	//You must set be set to false the preference browser.tabs.hoverPreview.enabled
 	const colorizeExtensionFile = false,
 		selectUrlbarText = true,
 		pathnameArrow = true,
