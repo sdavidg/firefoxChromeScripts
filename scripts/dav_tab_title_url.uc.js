@@ -16,62 +16,21 @@ https://github.com/LouCypher/tab-tooltip-url
 		showPreview = false,
 		timeUpdatePreview = 1000, //miliseconds
 		idTimeoutUpdatePreview,
+		colorizeExtensionFile = false,
 		numberClampsLines = 0 // 0 => no clamps
 	;
 	var widthCanvasIMG = 400;
 	var heightCanvasIMG = widthCanvasIMG*9/16;
 
 	function linkifiesLocationBar(url){
-		const colorizeExtensionFile = false;
-		const CLIKS = {
-			left: 0,
-			middle: 1,
-			right: 2
-		}
-
-		var styleString = (style) => {
-			return Object.keys(style).reduce((prev, curr) => {
-				return `${prev += curr.split(/(?=[A-Z])/).join('-').toLowerCase()}:${style[curr]};`
-			}, '');
-		};
-
-		function createElement(elto) {
-			elto = Object.assign({
-				attr: {},
-				evtListener: [],
-				estilos: {}
-			}, elto);
-			var node = document.createElement(elto.type);
-
-			Object.keys(elto.attrArray).forEach(key => {
-				if(key == "innerHTML"){
-					node.innerHTML = encodeHTML(elto.attrArray[key]);
-				}
-				else {
-					node.setAttribute(key, elto.attrArray[key]);
-				}
-			});
-
-			elto.evtListener.forEach(evt => {
-				node.addEventListener(evt.type, evt.funcion, false);
-			});
-
-			let estilo = styleString(elto.estilos);
-			if (estilo) {
-				node.setAttribute("style", estilo);
-			}
-
-			return node;
-		}
-
+		
 		function appendPart(text, clase) {
 			if (!text) return;
 
-			if(clase == "pathname")
-			{
+			if(clase == "pathname"){
 				let sp = createElement({
 					type: "label",
-					attrArray: {
+					attr: {
 						class: "label_pathname",
 						innerHTML:"/"
 					}
@@ -80,7 +39,7 @@ https://github.com/LouCypher/tab-tooltip-url
 			}
 			let sp = createElement({
 				type: "span",
-				attrArray: {
+				attr: {
 					class: clase,
 					innerHTML:text
 				}
@@ -92,7 +51,7 @@ https://github.com/LouCypher/tab-tooltip-url
 
 		var divLocationBar = createElement({
 			type: "div",
-			attrArray: {
+			attr: {
 				class: "claseLocationBarTooltip"
 			}
 		});
@@ -134,14 +93,14 @@ https://github.com/LouCypher/tab-tooltip-url
 						sp.innerHTML = "";
 						sp.appendChild(createElement({
 							type: "locationBarTag",
-							attrArray: {
+							attr: {
 								href:sp.getAttribute("href"),
 								innerHTML: arrayDot.join(".")
 							}
 						}));
 						sp.appendChild(createElement({
 							type: "locationBarTag",
-							attrArray: {
+							attr: {
 								class: "extension",
 								href:sp.getAttribute("href"),
 								innerHTML: "."+extension
@@ -314,22 +273,20 @@ https://github.com/LouCypher/tab-tooltip-url
 		CSS_Loader.load(style);
 	}
 
-	function paddy(n, p, c) {
+	function paddy(n, p=2, c=0) {
 		var pad_char = typeof c !== 'undefined' ? c : '0';
 		var pad = new Array(1 + p).join(pad_char);
 		return (pad + n).slice(-pad.length);
 	}
-	function paddy2(n) {
-		return paddy(n, 2, 0);
-	}
+	
 	function fechaACadena(fecha){
-		var dia = paddy2(fecha.getDate());
-		var mes = paddy2(fecha.getMonth()+1);
+		var dia = paddy(fecha.getDate());
+		var mes = paddy(fecha.getMonth()+1);
 		var anno = fecha.getFullYear();
 
-		var hora = paddy2(fecha.getHours());
-		var minutos = paddy2(fecha.getMinutes());
-		var segundos = paddy2(fecha.getSeconds());
+		var hora = paddy(fecha.getHours());
+		var minutos = paddy(fecha.getMinutes());
+		var segundos = paddy(fecha.getSeconds());
 
 		return dia+"/"+mes+"/"+anno+" "+hora+":"+minutos+":"+segundos;
 	}
@@ -347,29 +304,32 @@ https://github.com/LouCypher/tab-tooltip-url
 			.replace(/"/g, '&quot;')
 			.replace(/'/g, '&apos;');
 	}
-	function createElement(elto) {
+	function createElement(elto, xul) {
 		elto = Object.assign({
 			attr: {},
-			evtListener: [],
+			evtListener: {},
 			estilos: {}
 		}, elto);
 
-		var node = window.document.createXULElement(elto.type);
+		var node = xul?window.document.createXULElement(elto.type):document.createElement(elto.type);
 
 		Object.keys(elto.attr).forEach(key => {
 			if(key == "innerHTML"){
 				node.innerHTML = encodeHTML(elto.attr[key]);
 			}
-			if(key == "textContent"){
+			else if(key == "textContent"){
 				node.textContent = elto.attr[key];
 			}
-			else {
+			else if(key.startsWith('on')){
+				node.addEventListener(key.slice(2), new Function(elto.attr[key]));
+			}
+			else{
 				node.setAttribute(key, elto.attr[key]);
 			}
 		});
 
-		elto.evtListener.forEach(evt => {
-			node.addEventListener(evt.type, evt.funcion, false);
+		Object.keys(elto.evtListener).forEach(key => {
+			node.addEventListener(key, elto.evtListener[key]);
 		});
 
 		let estilo = styleString(elto.estilos);
@@ -549,8 +509,12 @@ https://github.com/LouCypher/tab-tooltip-url
 			orient: "vertical",
 			onpopupshowing: "return this.showing(this, this.triggerNode || document.tooltipNode);",
 			onpopuphiding: "this.hidding(this, this.triggerNode || document.tooltipNode);"
+		},
+		evtListener:{
+			//popupshowing: function(){return this.showing(this, this.triggerNode || document.tooltipNode);},
+			//popuphiding: function(){this.hidding(this, this.triggerNode || document.tooltipNode);}
 		}
-	});
+	}, true);
 	tip.showing = showing;
 	tip.hidding = hidding;
 	var arrowscrollbox = document.getElementById("tabbrowser-arrowscrollbox")
