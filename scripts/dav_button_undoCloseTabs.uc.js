@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name                dav_button_undoCloseTabs
 // @author          	dav
-// @version             1.0
+// @version             2.0
 // @description         dav_button_undoCloseTabs
 // ==/UserScript==
 
@@ -487,7 +487,12 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
 				{
 					if (attrs.hasOwnProperty(attrName) && attrs[attrName] != null)
 					{
-						node.setAttribute(attrName, attrs[attrName]);
+						if(attrName.startsWith('on')){							
+							node.addEventListener(attrName.slice(2), new Function(attrs[attrName]));
+						}
+						else{
+							node.setAttribute(attrName, attrs[attrName]);
+						}
 					}
 				}
 			}
@@ -723,7 +728,7 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
 				});
 				btn = button;
 				functions.initTooltip();
-				setTimeout(borraSobrantes, 10);
+				try{setTimeout(borraSobrantes, 10);}catch(e){}
 				insertaEstilos();
 				return button;
 			}
