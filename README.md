@@ -39,4 +39,9 @@ Pin/Unpin tab with double click
 2) pinTab => Pin tab automatically by url 
 </pre>
 
+<h4><a href="https://github.com/sdavidg/firefoxChromeScripts/blob/main/scripts/dav_button_saveSession.uc.js">saveSession</a></h4>
+<pre>
+Save all open tabs
+</pre>
+
 
