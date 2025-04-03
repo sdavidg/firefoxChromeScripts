@@ -13,7 +13,7 @@ https://github.com/LouCypher/tab-tooltip-url
 	if(location.href != 'chrome://browser/content/browser.xhtml') return;
 
 	var linkifiesUrl = true,
-		showPreview = false,
+		showPreview = true,
 		timeUpdatePreview = 1000, //miliseconds
 		idTimeoutUpdatePreview,
 		colorizeExtensionFile = false,
@@ -437,13 +437,12 @@ https://github.com/LouCypher/tab-tooltip-url
 	function showing(tip, target){
 		var tab = getTabElto(target);
 		if(!tab) return false;
-		tip.textContent = "";
-		tip.appendChild(getTooltipData(tab));
+		let domTooltipData = tip.querySelector("#getTooltipData");
+		domTooltipData.textContent = "";
+		domTooltipData.appendChild(getTooltipData(tab));
 		if(showPreview){
-			let img = createIMG();
-			let divImg = createElement({type:"div", attr:{class:"divImg"}})
-			divImg.appendChild(img);
-			tip.appendChild(divImg);
+			let img = tip.querySelector("#imgPreview");
+			tip.setAttribute("hidePreview", "true");		
 			getTooltipIMG(img, tab, tip);
 		}
 		return true;
@@ -507,12 +506,12 @@ https://github.com/LouCypher/tab-tooltip-url
 		attr:{
 			id: tipId,
 			orient: "vertical",
-			onpopupshowing: "return this.showing(this, this.triggerNode || document.tooltipNode);",
-			onpopuphiding: "this.hidding(this, this.triggerNode || document.tooltipNode);"
+			//onpopupshowing: "return this.showing(this, this.triggerNode || document.tooltipNode);",
+			//onpopuphiding: "this.hidding(this, this.triggerNode || document.tooltipNode);"
 		},
 		evtListener:{
-			//popupshowing: function(){return this.showing(this, this.triggerNode || document.tooltipNode);},
-			//popuphiding: function(){this.hidding(this, this.triggerNode || document.tooltipNode);}
+			popupshowing: function(){return tip.showing(tip, tip.triggerNode || document.tooltipNode);},
+			popuphiding: function(){tip.hidding(tip, tip.triggerNode || document.tooltipNode);}
 		}
 	}, true);
 	tip.showing = showing;
@@ -522,11 +521,19 @@ https://github.com/LouCypher/tab-tooltip-url
 	arrowscrollbox.setAttribute("tooltip", tipId);
 	arrowscrollbox.setAttribute("popupsinherittooltip", "true");
 	document.getElementById("mainPopupSet").appendChild(tip);
-	tip.textContent = "";
 	asignaEstilos();
+
+	tip.textContent = "";
+	tip.appendChild(createElement({type:"div", attr:{id:"getTooltipData"}}));	
 	if(showPreview){
 		asignaEstilosPreview();
-	}
+		let img = createIMG();
+		let divImg = createElement({type:"div", attr:{class:"divImg"}})
+		divImg.appendChild(img);
+		tip.appendChild(divImg);
+		tip.setAttribute("hidePreview", "true");
+	}	
+		
 	if(linkifiesUrl){
 		asignaEstilosLinkifiesUrl();
 	}
