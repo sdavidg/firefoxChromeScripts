@@ -23,7 +23,7 @@ https://github.com/LouCypher/tab-tooltip-url
 	var heightCanvasIMG = widthCanvasIMG*9/16;
 
 	function linkifiesLocationBar(url){
-		
+
 		function appendPart(text, clase) {
 			if (!text) return;
 
@@ -278,7 +278,7 @@ https://github.com/LouCypher/tab-tooltip-url
 		var pad = new Array(1 + p).join(pad_char);
 		return (pad + n).slice(-pad.length);
 	}
-	
+
 	function fechaACadena(fecha){
 		var dia = paddy(fecha.getDate());
 		var mes = paddy(fecha.getMonth()+1);
@@ -437,12 +437,13 @@ https://github.com/LouCypher/tab-tooltip-url
 	function showing(tip, target){
 		var tab = getTabElto(target);
 		if(!tab) return false;
+		hidding(tip, target);
 		let domTooltipData = tip.querySelector("#getTooltipData");
 		domTooltipData.textContent = "";
 		domTooltipData.appendChild(getTooltipData(tab));
 		if(showPreview){
 			let img = tip.querySelector("#imgPreview");
-			tip.setAttribute("hidePreview", "true");		
+			tip.setAttribute("hidePreview", "true");
 			getTooltipIMG(img, tab, tip);
 		}
 		return true;
@@ -506,16 +507,18 @@ https://github.com/LouCypher/tab-tooltip-url
 		attr:{
 			id: tipId,
 			orient: "vertical",
-			//onpopupshowing: "return this.showing(this, this.triggerNode || document.tooltipNode);",
-			//onpopuphiding: "this.hidding(this, this.triggerNode || document.tooltipNode);"
 		},
 		evtListener:{
-			popupshowing: function(){return tip.showing(tip, tip.triggerNode || document.tooltipNode);},
-			popuphiding: function(){tip.hidding(tip, tip.triggerNode || document.tooltipNode);}
+			popupshowing: function(evt){
+				let isShowing = showing(tip, tip.triggerNode || document.tooltipNode);
+				if(!isShowing){
+					top.evt = evt;
+					evt.preventDefault();
+				}
+			},
+			popuphiding: function(){hidding(tip, tip.triggerNode || document.tooltipNode);}
 		}
 	}, true);
-	tip.showing = showing;
-	tip.hidding = hidding;
 	var arrowscrollbox = document.getElementById("tabbrowser-arrowscrollbox")
 	arrowscrollbox.removeAttribute("tooltiptext");
 	arrowscrollbox.setAttribute("tooltip", tipId);
@@ -524,7 +527,7 @@ https://github.com/LouCypher/tab-tooltip-url
 	asignaEstilos();
 
 	tip.textContent = "";
-	tip.appendChild(createElement({type:"div", attr:{id:"getTooltipData"}}));	
+	tip.appendChild(createElement({type:"div", attr:{id:"getTooltipData"}}));
 	if(showPreview){
 		asignaEstilosPreview();
 		let img = createIMG();
@@ -532,8 +535,8 @@ https://github.com/LouCypher/tab-tooltip-url
 		divImg.appendChild(img);
 		tip.appendChild(divImg);
 		tip.setAttribute("hidePreview", "true");
-	}	
-		
+	}
+
 	if(linkifiesUrl){
 		asignaEstilosLinkifiesUrl();
 	}
