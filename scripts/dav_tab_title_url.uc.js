@@ -512,7 +512,6 @@ https://github.com/LouCypher/tab-tooltip-url
 			popupshowing: function(evt){
 				let isShowing = showing(tip, tip.triggerNode || document.tooltipNode);
 				if(!isShowing){
-					top.evt = evt;
 					evt.preventDefault();
 				}
 			},
