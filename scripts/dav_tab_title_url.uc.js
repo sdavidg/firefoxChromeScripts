@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name				 dav_tab_title_url.uc
-// @version				 5.0
+// @version				 5.1
 // @description			 dav_tab_title_url.uc
 // ==/UserScript==
 
@@ -508,10 +508,9 @@ https://github.com/LouCypher/tab-tooltip-url
 		let htmlns = "http://www.w3.org/1999/xhtml";
 		let img = document.createElementNS(htmlns, "img");
 		if(id){
-			img.setAttribute("id", "imgPreview");
+			img.setAttribute("id", id);
 		}
 		img.setAttribute("src", imgTransparent);
-		imgPreview = img;
 		return img;
 	}
 
@@ -592,9 +591,9 @@ https://github.com/LouCypher/tab-tooltip-url
 
 	if(showPreview){
 		asignaEstilosPreview();
-		let img = createIMG("imgPreview");
+		imgPreview = createIMG("imgPreview");
 		let divImg = createElement({type:"div", attr:{class:"divImg"}})
-		divImg.appendChild(img);
+		divImg.appendChild(imgPreview);
 		tipURL.appendChild(divImg);
 		tipURL.setAttribute("hidePreview", "true");
 	}
