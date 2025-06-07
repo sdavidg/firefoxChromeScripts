@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name				 dav_tab_title_url.uc
-// @version				 4.0
+// @version				 5.0
 // @description			 dav_tab_title_url.uc
 // ==/UserScript==
 
@@ -13,14 +13,18 @@ https://github.com/LouCypher/tab-tooltip-url
 	if(location.href != 'chrome://browser/content/browser.xhtml') return;
 
 	var linkifiesUrl = true,
-		showPreview = true,
+		showPreview = false,
 		timeUpdatePreview = 1000, //miliseconds
 		idTimeoutUpdatePreview,
 		colorizeExtensionFile = false,
+		showFavicon = true,
 		numberClampsLines = 0 // 0 => no clamps
 	;
 	var widthCanvasIMG = 400;
 	var heightCanvasIMG = widthCanvasIMG*9/16;
+	var defaultFavicon = "chrome://global/skin/icons/defaultFavicon.svg";
+	var imgTransparent = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAEklEQVQ4jWNgGAWjYBSMAggAAAQQAAF/TXiOAAAAAElFTkSuQmCC";
+	var imgPreview;
 
 	function linkifiesLocationBar(url){
 
@@ -142,7 +146,7 @@ https://github.com/LouCypher/tab-tooltip-url
 		/*************************************
 		*************** COLORS ***************
 		*************************************/
-		#dav_tab_title_url .title_clamp{
+		.dav_tab_title .title_clamp{
 			overflow: hidden;
 			display: -webkit-box;
 			-webkit-line-clamp: `+numberClampsLines+`;
@@ -162,7 +166,7 @@ https://github.com/LouCypher/tab-tooltip-url
 		}
 		.claseLocationBarTooltip .subdomain {
 			font-weight: bold;
-			color: #C68007;
+			color: #936007;
 		}
 		.claseLocationBarTooltip span.hostname{
 			font-weight: bold;
@@ -179,7 +183,7 @@ https://github.com/LouCypher/tab-tooltip-url
 			margin-left: -1px;
 		}
 		.claseLocationBarTooltip span.search{
-			color: #03AA03;
+			color: #760674;
 			margin-left: -1px;
 		}
 		.claseLocationBarTooltip .extension{
@@ -219,32 +223,37 @@ https://github.com/LouCypher/tab-tooltip-url
 	}
 	function asignaEstilos(){
 		var style = `
-			#dav_tab_title_url {
+			.dav_tab_title {
 				font-family: monospace;
+			}
+			.divTitle img.favicon{
+				vertical-align: middle;
+				margin-right: 0.5rem;
+				width:16px;
 			}
 			.divTitle{
 				display: block;
 			}
-			#dav_tab_title_url .title,
-			#dav_tab_title_url .url,
-			#dav_tab_title_url .reloadDiv {
+			.dav_tab_title .title,
+			.dav_tab_title .url,
+			.dav_tab_title .reloadDiv {
 				margin:5px;
 			}
-			#dav_tab_title_url .title,
-			#dav_tab_title_url .url{
+			.dav_tab_title .title,
+			.dav_tab_title .url{
 				display:inline-block;
 			}
-			#dav_tab_title_url .title{
+			.dav_tab_title .title{
 				color:black;
 				font-weight: bold;
 			}
-			#dav_tab_title_url .url{
+			.dav_tab_title .url{
 				color:blue;
 			}
-			#dav_tab_title_url .reloadText{
+			.dav_tab_title .reloadText{
 				color: teal;
 			}
-			#dav_tab_title_url .reloadValue{
+			.dav_tab_title .reloadValue{
 				color: red;
 				font-weight: bold;
 				margin:0 3px;
@@ -296,6 +305,7 @@ https://github.com/LouCypher/tab-tooltip-url
 			return `${prev += curr.split(/(?=[A-Z])/).join('-').toLowerCase()}:${style[curr]};`
 		}, '');
 	};
+
 	function encodeHTML(text) {
 		return decodeURI(text)
 			.replace(/&/g, '&amp;')
@@ -339,13 +349,15 @@ https://github.com/LouCypher/tab-tooltip-url
 
 		return node;
 	}
-	function getTabElto(target){
-		if(!target || target.nodeName == "tab"){
+	function getParentNodename(target, nodeName){
+
+		if(!target || target.nodeName == nodeName){
 			return target;
 		}else{
-			return getTabElto(target.parentNode);
+			return getParentNodename(target.parentNode, nodeName);
 		}
 	}
+
 	function createLabel(text,clase){
 		return createElement({
 			type:"label",
@@ -364,6 +376,7 @@ https://github.com/LouCypher/tab-tooltip-url
 			}
 		})
 	}
+
 	function getTooltipData(tab){
 		let title = unescape(tab.getAttribute("label")).replace(/%/g, '%25');
 		var titulo = createSpan(title,"title");
@@ -371,18 +384,45 @@ https://github.com/LouCypher/tab-tooltip-url
 			titulo.classList.add("title_clamp");
 		}
 		var url;
-		if(linkifiesUrl)
-		{
-			url = linkifiesLocationBar(tab.linkedBrowser.currentURI.spec);
+		if(tab.nodeName == "tab"){
+			url = tab.linkedBrowser.currentURI.spec;
 		}
-		else
-		{
-			url = createSpan(tab.linkedBrowser.currentURI.spec,"url");
+		else if(tab.nodeName == "toolbarbutton" || tab.nodeName == "menuitem" ){
+			url = tab.getAttribute("image");
+			if(url){
+				url = unescape(url).replace(/%/g, '%25');
+				url = url.replace(/^page-icon:/, "")
+			}
 		}
 
 		let divTitle = createElement({type:"div", attr:{class:"divTitle"}})
+		if(showFavicon ){
+			//imgFavicon.setAttribute("src", "https://t3.gstatic.com/faviconV2?client=SOCIAL&size=16&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url="+url);
+			let srcImgFavicon;
+			if(tab.nodeName == "tab"){
+				srcImgFavicon = tab.querySelector(".tab-icon-image").getAttribute("src");
+			}
+			else{
+				srcImgFavicon = tab.firstChild.getAttribute("src");
+			}
+
+			if(srcImgFavicon){
+				let imgFavicon = createIMG();
+				imgFavicon.setAttribute("class", "favicon");
+				imgFavicon.setAttribute("src", srcImgFavicon);
+				titulo.prepend(imgFavicon);
+			}
+		}
 		divTitle.appendChild(titulo);
-		divTitle.appendChild(url);
+		if(url){
+			if(linkifiesUrl){
+				url = linkifiesLocationBar(url);
+			}
+			else{
+				url = createSpan(url, "url");
+			}
+			divTitle.appendChild(url);
+		}
 
 		var df = document.createDocumentFragment();
 		df.appendChild(divTitle);
@@ -435,31 +475,72 @@ https://github.com/LouCypher/tab-tooltip-url
 	}
 
 	function showing(tip, target){
-		var tab = getTabElto(target);
+		var nombreNodo = target.nodeName;
+		var tab = getParentNodename(target, "tab");
+
+		if(!tab){
+			tab = getParentNodename(target, "menuitem");
+		}
+		if(!tab){
+			tab = getParentNodename(target, "toolbarbutton");
+		}
+
 		if(!tab) return false;
 		hidding(tip, target);
-		let domTooltipData = tip.querySelector("#getTooltipData");
+		let domTooltipData = tip.querySelector(".getTooltipData");
 		domTooltipData.textContent = "";
 		domTooltipData.appendChild(getTooltipData(tab));
-		if(showPreview){
-			let img = tip.querySelector("#imgPreview");
-			tip.setAttribute("hidePreview", "true");
-			getTooltipIMG(img, tab, tip);
+		if(showPreview && tab.nodeName=="tab"){
+			getTooltipIMG(tab, tip);
 		}
 		return true;
 	}
 	function hidding(tip, target){
 		if(idTimeoutUpdatePreview){
 			clearTimeout(idTimeoutUpdatePreview);
+			resetImgPreview();
 		}
 	}
-	function createIMG(){
+	function resetImgPreview(){
+		imgPreview.setAttribute("src", imgTransparent);
+	}
+	function createIMG(id){
 		let htmlns = "http://www.w3.org/1999/xhtml";
 		let img = document.createElementNS(htmlns, "img");
-		img.setAttribute("id", "imgPreview");
+		if(id){
+			img.setAttribute("id", "imgPreview");
+		}
+		img.setAttribute("src", imgTransparent);
+		imgPreview = img;
 		return img;
 	}
-	function getTooltipIMG(img, tab, tip){
+
+	function createTip(tipId){
+		let tip = createElement({
+			type:"tooltip",
+			attr:{
+				id: tipId,
+				"class":"dav_tab_title",
+				orient: "vertical",
+			},
+			evtListener:{
+				popupshowing: function(evt){
+					let isShowing = showing(tip, tip.triggerNode || document.tooltipNode);
+					if(!isShowing){
+						evt.preventDefault();
+					}
+				},
+				popuphiding: function(){hidding(tip, tip.triggerNode || document.tooltipNode);}
+			}
+		}, true);
+
+		tip.textContent = "";
+		tip.appendChild(createElement({type:"div", attr:{"class":"getTooltipData"}}));
+
+		return tip;
+	}
+
+	function getTooltipIMG(tab, tip){
 		var browser = tab.linkedBrowser;
 		let pending = tab.hasAttribute("pending") || !browser.browsingContext;
 		let docURI = pending ? null : browser?.documentURI || browser?.currentURI;
@@ -470,7 +551,6 @@ https://github.com/LouCypher/tab-tooltip-url
 			tip.setAttribute("hidePreview", "true");
 			return;
 		}
-
 		var canvas = PageThumbs.createCanvas(window);
 		PageThumbs.captureToCanvas(
 			browser,
@@ -488,7 +568,7 @@ https://github.com/LouCypher/tab-tooltip-url
 				reader.readAsDataURL(blob);
 				reader.onload = function() {
 				  var base64data = reader.result;
-				  img.setAttribute("src", base64data);
+				  imgPreview.setAttribute("src", base64data);
 				  tip.removeAttribute("hidePreview");
 				}
 			});
@@ -496,47 +576,40 @@ https://github.com/LouCypher/tab-tooltip-url
 		//idTimeoutUpdatePreview = setTimeout(getTooltipIMG, timeUpdatePreview, img, tab, tip);
 
 		idTimeoutUpdatePreview = setTimeout(
-			() => requestIdleCallback(() => requestAnimationFrame(() => getTooltipIMG(img, tab, tip))),
+			() => requestIdleCallback(() => requestAnimationFrame(() => getTooltipIMG(tab, tip))),
 			timeUpdatePreview
 		);
 	}
 
-	var tipId = "dav_tab_title_url"
-	var tip = createElement({
-		type:"tooltip",
-		attr:{
-			id: tipId,
-			orient: "vertical",
-		},
-		evtListener:{
-			popupshowing: function(evt){
-				let isShowing = showing(tip, tip.triggerNode || document.tooltipNode);
-				if(!isShowing){
-					evt.preventDefault();
-				}
-			},
-			popuphiding: function(){hidding(tip, tip.triggerNode || document.tooltipNode);}
-		}
-	}, true);
+	var tipIdUrl = "dav_tab_title_url"
+	var tipURL = createTip(tipIdUrl);
 	var arrowscrollbox = document.getElementById("tabbrowser-arrowscrollbox")
 	arrowscrollbox.removeAttribute("tooltiptext");
-	arrowscrollbox.setAttribute("tooltip", tipId);
+	arrowscrollbox.setAttribute("tooltip", tipIdUrl);
 	arrowscrollbox.setAttribute("popupsinherittooltip", "true");
-	document.getElementById("mainPopupSet").appendChild(tip);
+	document.getElementById("mainPopupSet").appendChild(tipURL);
 	asignaEstilos();
 
-	tip.textContent = "";
-	tip.appendChild(createElement({type:"div", attr:{id:"getTooltipData"}}));
 	if(showPreview){
 		asignaEstilosPreview();
-		let img = createIMG();
+		let img = createIMG("imgPreview");
 		let divImg = createElement({type:"div", attr:{class:"divImg"}})
 		divImg.appendChild(img);
-		tip.appendChild(divImg);
-		tip.setAttribute("hidePreview", "true");
+		tipURL.appendChild(divImg);
+		tipURL.setAttribute("hidePreview", "true");
 	}
 
 	if(linkifiesUrl){
 		asignaEstilosLinkifiesUrl();
 	}
+
+	setTimeout(function(){
+		var tipIdBookmark = "dav_tab_title_bookmark";
+		var placesToolbarItems = document.querySelector("#PlacesToolbarItems");
+		placesToolbarItems.removeAttribute("tooltiptext");
+		placesToolbarItems.setAttribute("tooltip", tipIdBookmark);
+		placesToolbarItems.setAttribute("popupsinherittooltip", "true");
+		document.getElementById("mainPopupSet").appendChild(createTip(tipIdBookmark));
+	}, 0)
+
 })();
