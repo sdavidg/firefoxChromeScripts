@@ -24,7 +24,6 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
 		tooltipId = btnId + "-tooltip",
 		btnLabel = "undoclose_tab",
         btnImage = "list-style-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAABZVBMVEX////w8PD09PTx8fHw8PCPkIvv7++LjIfw8PDu7u6ZmZXv7+/29vbw8PD///+Txdt8lJ2RkY2Sk4+bzeJcnLsbcp6LjIcwf6bg4N/m//+XyuDf7/+LvNGmr68ufqbg4N9OhaLm8PJvrstCjrPg4N9Rk7Q8hqfk8PRoqMc5h60vgKk9ia/f4N7w8PDi7/ZgpMOLtMny9fYmeaIqfaff4N6hpKLv7+/h8PVwqcTB1N3L3ebv7+9trMqLjIeOj4rf39719vbM7PaMt81hpMPL7fmbnJeoqaXr6+tin774+/vF2t+lq6qKlI+hop38/Pz7+/v5+fn9/f29vruLjIeqq6f7+/v5+fnGxsSLjId5rcfg8vw4ibN8ud3n8vgacZ2extrA5//4+/wacp4yha8ZcZ18wuyIxuthrNc5irdvt+KRzvO62ep+w+7N6PeY1/+U1v+h2/9am7sbcp4keaXm8/ovgq07jLe+yJo8AAAAWXRSTlMAES5KZr+CMJ7X7Lr4ZwHdD4f0yftxJtP6Cj4Q/EIe9HPg/tXy/kvL/fr++fGfuf3Bzv787+6DptCRyLvRDs/u+P3O+TSw5Or8ovXiHqKWW0aBpyVHNSZMDw1FfDAAAACvSURBVHhehchTcwRBAIXRXmewtG3btm0jtn9/elPZmpqnnKd7P0DgADK5glyUQpH4b0pYkJo730t1PADxBSiKhlVvT4v11myBgSHD8Vz+cP388rr7rGlg0CIIojccrx5v7u4fjDCYMAxLWm1f33bHcuWEwXUBuT3eS58/cBuEIcQ8iURj8cT7RwqkM1n6LzabXtgUS6BcqdLO6o1mC7Q7XepZrz8YgtGYQphMZ+BfP976HHRDoNUhAAAAAElFTkSuQmCC)",
-        btnTip = "undoclose_tab",
 		CLIKS = {
 			left:0,
 			middle:1,
@@ -249,8 +248,9 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
 			tip = this.createElement("tooltip", {
 				id: options.tipId,
 				orient: "vertical",
-				onpopupshowing: "return this.functions.updTooltip(this, this.triggerNode || document.tooltipNode);",
-				onpopuphiding: "this.cancelUpdateTimer();"
+			},{
+				popupshowing: function(){this.functions.updTooltip(this, tip.triggerNode || document.tooltipNode)},
+				popuphiding: function(){this.cancelUpdateTimer()}
 			});
 			tip.functions = this;
 			tip._updateTimer = 0;
@@ -407,8 +407,10 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
 		undoCloseTab: function(i, event) {
 			if ("undoCloseTab" in window) // Firefox 2.0+
 				undoCloseTab(i);
-			else // SeaMonkey
-				gBrowser.undoCloseTab(i);
+			else{
+				//gBrowser.undoCloseTab(i);
+				SessionStore.undoCloseTab(window, i)
+			}
 		},
 		addUndoWindowsList:function(undoPopup, _undoWindowItems){
 			_undoWindowItems.forEach(function(undoItem, i) {
@@ -431,12 +433,13 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
 						.replace("%title", title)
 						.replace("%count", tabs.length),
 					"class": "menuitem-iconic bookmark-item menuitem-with-favicon",
-					oncommand: "undoCloseWindow(" + i + ");",
 					cb_url: decodeURISecure(url),
 					cb_urlDecoded: this.crop(url),
 					cb_closedAt: undoItem.closedAt || 0,
 					cb_index: i,
 					cb_type: "window"
+				},{
+					command: function(){SessionStore.undoCloseWindow(i)}
 				});
 				var icon = selectedTab.image || selectedTab.attributes && selectedTab.attributes.image || noImage;
 				mi.setAttribute("image", this.cachedIcon(icon));
@@ -455,8 +458,6 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
 					label: title,
 					//tooltiptext: "url: "+url+"    \n"+closedAt,
 					class: "menuitem-iconic bookmark-item menuitem-with-favicon",
-					oncommand: "this.parentNode.parentNode.functions.undoCloseTab(" + i + ", event);",
-					onmouseup: 'this.parentNode.parentNode.functions.shouldPreventHide(event)',
 					cb_url: decodeURISecure(url),
 					cb_urlDecoded: this.crop(url),
 					cb_closedAt: undoItem.closedAt || 0,
@@ -465,6 +466,9 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
 					numberEntries: numberEntries || null,
 					stateEntries: JSON.stringify(state.entries),
 					stateIndex:state.index
+				},{
+					command: function(event){this.parentNode.parentNode.functions.undoCloseTab( i, event)},
+					mouseup: function(event){this.parentNode.parentNode.functions.shouldPreventHide(event)},
 				});
 
 				//if (state && "attributes" in state && "privateTab-isPrivate" in state.attributes)
@@ -479,15 +483,12 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
 
 			}, this);
 		},
-		createElement:function (name, attrs) {
+		createElement:function (name, attrs, evtListener={}) {
 			var node = document.createElementNS(xulns, name);
-			if (attrs)
-			{
-				for (var attrName in attrs)
-				{
-					if (attrs.hasOwnProperty(attrName) && attrs[attrName] != null)
-					{
-						if(attrName.startsWith('on')){							
+			if (attrs){
+				for (var attrName in attrs){
+					if (attrs.hasOwnProperty(attrName) && attrs[attrName] != null){
+						if(attrName.startsWith('on')){
 							node.addEventListener(attrName.slice(2), new Function(attrs[attrName]));
 						}
 						else{
@@ -496,6 +497,10 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
 					}
 				}
 			}
+
+			Object.keys(evtListener).forEach(key => {
+				node.addEventListener(key, evtListener[key].bind(node));
+			});
 
 			return node;
 		},
@@ -596,15 +601,17 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
 						wc > options.hideRestoreAllForSingleEntry &&
 							df.appendChild(this.createElement("menuitem", {
 								label: _localize("restoreAllWindows"),
-								accesskey: _localize("restoreAllWindowsAccesskey"),
-								oncommand: "for(var i = 0; i < " + _undoWindowItems.length + "; ++i) undoCloseWindow();"
+								accesskey: _localize("restoreAllWindowsAccesskey")
+							},{
+								command: function(){for(let i = 0; i < _undoWindowItems.length ; ++i) SessionStore.undoCloseWindow();}
 							}));
 						break;
 					case "clearClosedWindows":
 						wc && df.appendChild(this.createElement("menuitem", {
 							label: _localize("clearWindowsHistory"),
 							accesskey: _localize("clearWindowsHistoryAccesskey"),
-							oncommand: "this.parentNode.parentNode.functions.clearUndoWindowsList();"
+						},{
+							command: function(){this.parentNode.parentNode.functions.clearUndoWindowsList()}
 						}));
 						break;
 					case "closedTabs":
@@ -615,14 +622,16 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
 							df.appendChild(this.createElement("menuitem", {
 								label: _localize("restoreAllTabs"),
 								accesskey: _localize("restoreAllTabsAccesskey"),
-								oncommand: "for(var i = 0; i < " + _undoTabItems.length + "; ++i) this.parentNode.parentNode.functions.undoCloseTab();"
+							},{
+								command: function(){for(let i = 0; i < _undoTabItems.length ; ++i) this.parentNode.parentNode.functions.undoCloseTab();}
 							}));
 						break;
 					case "clearClosedTabs":
 						tc && df.appendChild(this.createElement("menuitem", {
 							label: _localize("clearTabsHistory"),
 							accesskey: _localize("clearTabsHistoryAccesskey"),
-							oncommand: "this.parentNode.parentNode.functions.clearUndoTabsList();"
+						},{
+							command: function(){this.parentNode.parentNode.functions.clearUndoTabsList();}
 						}));
 						break;
 					case "clearAll":
@@ -634,14 +643,16 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
 						df.appendChild(this.createElement("menuitem", {
 							label: _localize("clearAllHistory"),
 							accesskey: _localize("clearAllHistoryAccesskey"),
-							oncommand: "this.parentNode.parentNode.functions.clearAllLists();"
+						},{
+							command: function(){this.parentNode.parentNode.functions.clearAllLists();}
 						}));
 						break;
 					case "restoreLastSession": // Gecko 2.0+
 						canRestoreLastSession && df.appendChild(this.createElement("menuitem", {
 							label: _localize("restoreLastSession"),
 							accesskey: _localize("restoreLastSessionAccesskey"),
-							oncommand: "this.parentNode.parentNode.functions.restoreLastSession();"
+						},{
+							command: function(){this.parentNode.parentNode.functions.restoreLastSession();}
 						}));
 						break;
 					case "separator":
@@ -734,7 +745,7 @@ Forked from https://github.com/Infocatcher/Custom_Buttons/tree/master/Undo_Close
 			}
 		});
 
-    } catch (e) {
+	} catch (e) {
 		console.error(e);
 	};
 
