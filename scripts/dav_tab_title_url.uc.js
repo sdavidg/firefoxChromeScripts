@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name				 dav_tab_title_url.uc
-// @version				 5.1
+// @version				 5.2
 // @description			 dav_tab_title_url.uc
 // ==/UserScript==
 
@@ -350,11 +350,17 @@ https://github.com/LouCypher/tab-tooltip-url
 		return node;
 	}
 	function getParentNodename(target, nodeName){
-
 		if(!target || target.nodeName == nodeName){
 			return target;
 		}else{
 			return getParentNodename(target.parentNode, nodeName);
+		}
+	}
+	function getFirstParentNodeName(target, set){
+		if(!target || set.has(target.nodeName)){
+			return target;
+		}else{
+			return getFirstParentNodeName(target.parentNode, set);
 		}
 	}
 
@@ -398,12 +404,14 @@ https://github.com/LouCypher/tab-tooltip-url
 		let divTitle = createElement({type:"div", attr:{class:"divTitle"}})
 		if(showFavicon ){
 			//imgFavicon.setAttribute("src", "https://t3.gstatic.com/faviconV2?client=SOCIAL&size=16&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url="+url);
-			let srcImgFavicon;
-			if(tab.nodeName == "tab"){
-				srcImgFavicon = tab.querySelector(".tab-icon-image").getAttribute("src");
-			}
-			else{
-				srcImgFavicon = tab.firstChild.getAttribute("src");
+			let srcImgFavicon = tab.getAttribute("image");
+			if(!srcImgFavicon){
+				if(tab.nodeName == "tab"){
+					srcImgFavicon = tab.querySelector(".tab-icon-image").getAttribute("src");
+				}
+				else{
+					srcImgFavicon = tab.firstChild.getAttribute("src");
+				}
 			}
 
 			if(srcImgFavicon){
@@ -476,14 +484,16 @@ https://github.com/LouCypher/tab-tooltip-url
 
 	function showing(tip, target){
 		var nombreNodo = target.nodeName;
-		var tab = getParentNodename(target, "tab");
 
+		/*var tab = getParentNodename(target, "tab");
 		if(!tab){
 			tab = getParentNodename(target, "menuitem");
 		}
 		if(!tab){
 			tab = getParentNodename(target, "toolbarbutton");
-		}
+		}*/
+
+		var tab = getFirstParentNodeName(target, new Set(["tab","menuitem","toolbarbutton"]));
 
 		if(!tab) return false;
 		hidding(tip, target);
