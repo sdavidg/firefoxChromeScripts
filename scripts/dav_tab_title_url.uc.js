@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name				 dav_tab_title_url.uc
-// @version				 5.2
+// @version				 5.3
 // @description			 dav_tab_title_url.uc
 // ==/UserScript==
 
@@ -592,10 +592,10 @@ https://github.com/LouCypher/tab-tooltip-url
 
 	var tipIdUrl = "dav_tab_title_url"
 	var tipURL = createTip(tipIdUrl);
-	var arrowscrollbox = document.getElementById("tabbrowser-arrowscrollbox")
-	arrowscrollbox.removeAttribute("tooltiptext");
-	arrowscrollbox.setAttribute("tooltip", tipIdUrl);
-	arrowscrollbox.setAttribute("popupsinherittooltip", "true");
+	var tbt = document.getElementById("tabbrowser-tabs")
+	tbt.removeAttribute("tooltiptext");
+	tbt.setAttribute("tooltip", tipIdUrl);
+	tbt.setAttribute("popupsinherittooltip", "true");
 	document.getElementById("mainPopupSet").appendChild(tipURL);
 	asignaEstilos();
 
