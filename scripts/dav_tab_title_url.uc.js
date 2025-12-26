@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name				 dav_tab_title_url.uc
-// @version				 5.3
+// @version				 5.4
 // @description			 dav_tab_title_url.uc
 // ==/UserScript==
 
@@ -407,7 +407,10 @@ https://github.com/LouCypher/tab-tooltip-url
 			let srcImgFavicon = tab.getAttribute("image");
 			if(!srcImgFavicon){
 				if(tab.nodeName == "tab"){
-					srcImgFavicon = tab.querySelector(".tab-icon-image").getAttribute("src");
+					srcImgFavicon = tab.querySelector(".tab-icon-image").getAttribute("src") || "chrome://global/skin/icons/defaultFavicon.svg";
+				}
+				else if(tab.getAttribute("container") == "true"){
+					srcImgFavicon = "chrome://global/skin/icons/folder.svg";
 				}
 				else{
 					srcImgFavicon = tab.firstChild.getAttribute("src");
@@ -493,7 +496,7 @@ https://github.com/LouCypher/tab-tooltip-url
 			tab = getParentNodename(target, "toolbarbutton");
 		}*/
 
-		var tab = getFirstParentNodeName(target, new Set(["tab","menuitem","toolbarbutton"]));
+		var tab = getFirstParentNodeName(target, new Set(["tab","menuitem","menu","toolbarbutton"]));
 
 		if(!tab) return false;
 		hidding(tip, target);
@@ -589,14 +592,20 @@ https://github.com/LouCypher/tab-tooltip-url
 			timeUpdatePreview
 		);
 	}
-
-	var tipIdUrl = "dav_tab_title_url"
-	var tipURL = createTip(tipIdUrl);
-	var tbt = document.getElementById("tabbrowser-tabs")
-	tbt.removeAttribute("tooltiptext");
-	tbt.setAttribute("tooltip", tipIdUrl);
-	tbt.setAttribute("popupsinherittooltip", "true");
-	document.getElementById("mainPopupSet").appendChild(tipURL);
+	
+	function createTipType(tipId, idSelector){		
+		var idSel = document.getElementById(idSelector)
+		idSel.removeAttribute("tooltiptext");
+		idSel.setAttribute("tooltip", tipId);
+		idSel.setAttribute("popupsinherittooltip", "true");
+		
+		var myTip = createTip(tipId);
+		document.getElementById("mainPopupSet").appendChild(myTip);
+		
+		return myTip;
+	}
+	
+	let tipURL = createTipType("dav_tab_title_url", "tabbrowser-tabs")
 	asignaEstilos();
 
 	if(showPreview){
@@ -613,12 +622,7 @@ https://github.com/LouCypher/tab-tooltip-url
 	}
 
 	setTimeout(function(){
-		var tipIdBookmark = "dav_tab_title_bookmark";
-		var placesToolbarItems = document.querySelector("#PlacesToolbarItems");
-		placesToolbarItems.removeAttribute("tooltiptext");
-		placesToolbarItems.setAttribute("tooltip", tipIdBookmark);
-		placesToolbarItems.setAttribute("popupsinherittooltip", "true");
-		document.getElementById("mainPopupSet").appendChild(createTip(tipIdBookmark));
+		createTipType("dav_tab_title_bookmark", "PlacesToolbarItems")
 	}, 0)
 
 })();
